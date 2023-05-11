@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  surrealdb:
+    image: "surrealdb/surrealdb:latest"
+    restart: "always"
+    ports:
+      - "$SURREAL_DB_PORT:8000"
+    volumes:
+      - "./run/database:/database"
+    command: "start --log $SURREAL_DB_DEBUG_LEVEL --user $SURREAL_DB_USER --pass $SURREAL_DB_PASS file:/database/surreal.db"

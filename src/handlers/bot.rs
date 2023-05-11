@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use log::{debug, error};
 use serenity::{prelude::{EventHandler, Context}, model::prelude::{Ready, GuildId, interaction::Interaction}};
 
-use crate::{core::{application_context::ApplicationContext, controllers::{SlashCommandControllerTrait}, constants}, controllers::{ ping::PingController}};
+use crate::{core::{application_context::ApplicationContext, controllers::{SlashCommandControllerTrait}, constants}, controllers::{ ping::PingController, babyfoot_match::BabyfootMatchController, babyfoot_last_ten::BabyfootLastTenController}};
 
 pub struct Bot {
     application_context: ApplicationContext,
@@ -25,20 +25,30 @@ impl EventHandler for Bot {
             debug!(
                 "Received command interaction: {:?} ({:?}) by {:?}",
                 command.data.name,
-                command.data.options,
+                command.data.options
+                    .iter()
+                    .map(|opt| format!("{}: {:?}", opt.name, opt.value))
+                    .collect::<Vec<String>>()
+                    .join(", "),
                 command.user.tag()
             );
 
             let result = match command.data.name.as_str() {
                 "ping" => PingController::run(&command, &ctx, &self.application_context).await,
+                "babyfoot_match"=> BabyfootMatchController::run(&command, &ctx, &self.application_context).await,
+                "babyfoot_last_ten"=> BabyfootLastTenController::run(&command, &ctx, &self.application_context).await,
                 _ => Err(anyhow!("Not implemented !")),
             };
 
             if let Err(error) = result {
-                debug!(
-                    "Received command interaction: {:?} ({:?}) by {:?} -> {:?}",
+                error!(
+                    "Received invalid command interaction: {:?} ({:?}) by {:?} -> {:?}",
                     command.data.name,
-                    command.data.options,
+                    command.data.options
+                    .iter()
+                    .map(|opt| format!("{}: {:?}", opt.name, opt.value))
+                    .collect::<Vec<String>>()
+                    .join(", "),                    
                     command.user.tag(),
                     error
                 );
@@ -68,18 +78,27 @@ impl EventHandler for Bot {
             parsed_guild_id.unwrap()
         );
 
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands.create_application_command(|command| PingController::register(command))
+        let registration_result = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+            commands
+                .create_application_command(|command| PingController::register(command))
+                .create_application_command(|command| BabyfootMatchController::register(command))
+                .create_application_command(|command| BabyfootLastTenController::register(command))
         })
-        .await
-        .unwrap();
+        .await;
+
+        if let Err(error) = &registration_result {
+            error!("Error while registering commands: {:#?}", error);
+            return;
+        }
 
         debug!(
             "Added guild commands: {:#?}",
-            commands
+            registration_result
+                .unwrap()
                 .iter()
                 .map(|command| command.name.clone())
-                .collect::<String>()
+                .collect::<Vec<String>>()
+                .join(", ")
         );
     }
 }

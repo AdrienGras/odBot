@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use clap::{builder::ValueParser, Parser, Subcommand};
 use log::debug;
 use serenity::Client;
 
-use crate::libraries::discord;
+use crate::{libraries::discord, core::commands};
 
 use super::application_context::ApplicationContext;
 
@@ -48,12 +48,24 @@ pub async fn launch_server(discord_client: Client) -> Result<()> {
 }
 
 pub async fn launch_command(
-    _discord_client: Client,
-    _application_context: ApplicationContext,
-    _sub_command: &str,
-    _args: &HashMap<String, Option<String>>,
+    discord: Client,
+    app: ApplicationContext,
+    sub_command: &str,
+    args: &HashMap<String, Option<String>>,
 ) -> Result<()> {
-    Ok(())
+    debug!("Generating command registry...");
+    let command_registry = commands::get_command_registry();
+    debug!("Command registry context generated !");
+
+    debug!("Searching registry for command...");
+    let command_instance = command_registry.get(sub_command);
+
+    if command_instance.is_none() {
+        bail!("Cannot find command: {:?}", sub_command);
+    }
+
+    debug!("Command found, entering command...");
+    Ok(command_instance.unwrap().run(discord, app, args).await?)
 }
 
 /// This function will parse the arg string into a map formatted as KEY => Option(VALUE).

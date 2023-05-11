@@ -1,8 +1,8 @@
 use std::env;
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use log::debug;
-use serenity::{Client, prelude::{GatewayIntents, Context}, model::prelude::interaction::{application_command::ApplicationCommandInteraction, InteractionResponseType}};
+use serenity::{Client, prelude::{GatewayIntents, Context}, model::{prelude::interaction::{application_command::{ApplicationCommandInteraction, CommandDataOption, CommandDataOptionValue}, InteractionResponseType}, user::User}};
 use serenity_ctrlc::{Ext, Disconnector};
 
 use crate::handlers::bot::Bot;
@@ -48,4 +48,30 @@ pub async fn respond_with_message(command: &ApplicationCommandInteraction, ctx: 
             .interaction_response_data(|message| message.content(content))
         })
     .await
+}
+
+pub fn resolve_user_arg(arg: &CommandDataOption) -> Result<&User> {
+    let arg_val = arg
+        .resolved
+        .as_ref()
+        .unwrap();
+
+    if let CommandDataOptionValue::User(user, _member) = arg_val {
+        Ok(user)
+    } else {
+        bail!("Please provide a valid user");
+    }
+}
+
+pub fn resolve_int_arg(arg: &CommandDataOption) -> Result<i64> {
+    let arg_val = arg
+        .resolved
+        .as_ref()
+        .unwrap();
+
+    if let CommandDataOptionValue::Integer(val) = arg_val {
+        Ok(*val)
+    } else {
+        bail!("Please provide a valid integer");
+    }
 }

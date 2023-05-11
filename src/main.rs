@@ -4,14 +4,16 @@ mod utils;
 mod handlers;
 mod controllers;
 mod middlewares;
+mod models;
+mod commands;
 
 use crate::core::launcher::{self, Cli, Command};
 use crate::core::application_context::ApplicationContext;
 use anyhow::Result;
 use clap::Parser;
 use handlers::bot::Bot;
-use libraries::discord;
-use log::debug;
+use libraries::{discord, surrealdb};
+use log::{debug, error};
 use utils::{environment, logger};
 
 #[tokio::main]
@@ -22,34 +24,47 @@ async fn main() -> Result<()> {
 
     // load logger
     logger::load();
+    debug!("Environment and logger loaded !");
 
     debug!("Starting surrealDB interface...");
-
+    let db = surrealdb::get_connection().await?;
     debug!("SurrealDB interface started !");
 
     debug!("Generating application context...");
-    let app = ApplicationContext::new();
+    let app = ApplicationContext::new(db);
     debug!("Application context generated !");
 
     // parsing CLI class to dispatch action
+    debug!("Parsing CLI command & args...");
     let cli = Cli::parse();
+    debug!("CLI parsed !");
 
     // either trigger the launch of the web API service, or execute a given command.
     match &cli.command {
         // launch discord bot daemon.
         Command::Launch => {
+            debug!("Initializing discord client...");
             let discord_client = discord::create_bot_client(Bot::new(app)).await?;
+            debug!("Discord client initialized !");
 
-            launcher::launch_server(discord_client).await?
+            debug!("Starting discord bot daemon...");
+            if let Err(error) = launcher::launch_server(discord_client).await {
+                error!("Discord bot daemon crashed: {:?}", error);
+            }
+            debug!("Shutting down discord bot daemon...");
         },
         // executing given command
         Command::Console { sub_command, args } => {
+            debug!("Initializing discord client...");
             let discord_client = discord::create_console_client().await?;
+            debug!("Discord client initialized !");
 
-            launcher::launch_command(discord_client, app, sub_command, args).await?
+            debug!("Starting command interface...");
+            launcher::launch_command(discord_client, app, sub_command, args).await?;
+            debug!("Shutting down command interface...");
         }
     }
 
-    // ok
+    debug!("Shutting down...");
     Ok(())
 }
