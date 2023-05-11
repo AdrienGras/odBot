@@ -12,3 +12,6 @@ dotenv = "0.15.0"
 anyhow = "1.0.71"
 env_logger = "0.10.0"
 clap = { version= "4.2.7", features = ["derive"]}
+serenity_ctrlc = "0.3.0"
+log = "0.4.17"
+async-trait = "0.1.68"

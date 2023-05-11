@@ -1,8 +1,13 @@
 use std::collections::HashMap;
 
-use super::application::ApplicationContext;
 use anyhow::Result;
 use clap::{builder::ValueParser, Parser, Subcommand};
+use log::debug;
+use serenity::Client;
+
+use crate::libraries::discord;
+
+use super::application_context::ApplicationContext;
 
 /// A structure representing the principal running option for this program.
 ///
@@ -33,14 +38,20 @@ pub enum Command {
     },
 }
 
-pub async fn launch_server(ctx: &ApplicationContext) -> Result<()> {
+pub async fn launch_server(discord_client: Client) -> Result<()> {
+    debug!("Starting discord bot daemon...");
+
+    discord::start_client(discord_client).await?;
+
+    debug!("Shutting down discord bot daemon...");
     Ok(())
 }
 
 pub async fn launch_command(
-    ctx: &ApplicationContext,
-    sub_command: &str,
-    args: &HashMap<String, Option<String>>,
+    _discord_client: Client,
+    _application_context: ApplicationContext,
+    _sub_command: &str,
+    _args: &HashMap<String, Option<String>>,
 ) -> Result<()> {
     Ok(())
 }
