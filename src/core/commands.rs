@@ -4,14 +4,21 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serenity::Client;
 
-use crate::commands::test_db::TestBDCommand;
+use crate::commands::{
+    database_reset::DatabaseResetCommand, import_babyfoot_quotes::ImportBabyfootQuotesCommand,
+};
 
 use super::application_context::ApplicationContext;
 
 #[async_trait]
 pub trait AsyncCommand: Send + Sync {
     fn get_name(&self) -> String;
-    async fn run(&self, discord: Client, app: ApplicationContext, args: &HashMap<String, Option<String>>) -> Result<()>;
+    async fn run(
+        &self,
+        discord: Client,
+        app: ApplicationContext,
+        args: &HashMap<String, Option<String>>,
+    ) -> Result<()>;
 }
 
 pub struct ConsoleCommandRegistry {
@@ -42,6 +49,7 @@ impl ConsoleCommandRegistry {
     }
 
     /// gets names of all the commands present in the current registry.
+    #[allow(dead_code)]
     pub fn get_all_names(&self) -> Vec<String> {
         return self.commands.keys().cloned().collect();
     }
@@ -51,7 +59,8 @@ pub fn get_command_registry() -> ConsoleCommandRegistry {
     let mut registry = ConsoleCommandRegistry::new();
 
     // insert all wanted command here
-    registry.add(Arc::new(TestBDCommand::new()));
+    registry.add(Arc::new(DatabaseResetCommand::new()));
+    registry.add(Arc::new(ImportBabyfootQuotesCommand::new()));
 
     registry
 }

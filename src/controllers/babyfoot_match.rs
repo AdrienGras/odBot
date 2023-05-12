@@ -1,40 +1,48 @@
-use anyhow::{Result, bail};
+use anyhow::Result;
 use async_trait::async_trait;
 use log::debug;
-use serenity::{model::{prelude::{interaction::application_command::{ApplicationCommandInteraction, CommandDataOptionValue}, command::CommandOptionType}, user::User}, builder::CreateApplicationCommand, prelude::Context};
+use serenity::{
+    builder::CreateApplicationCommand,
+    model::prelude::{
+        command::CommandOptionType, interaction::application_command::ApplicationCommandInteraction,
+    },
+    prelude::Context,
+};
 
-use crate::{core::{ application_context::ApplicationContext, controllers::SlashCommandControllerTrait, middlewares::ActionMiddleware}, middlewares::{ping_middleware::PingMiddleware, babyfoot_middleware::BabyfootMiddleware}, libraries::discord};
+use crate::{
+    core::{application_context::ApplicationContext, controllers::SlashCommandControllerTrait},
+    libraries::discord,
+    middlewares::babyfoot_middleware::BabyfootMiddleware,
+};
 
 pub struct BabyfootMatchController;
 
 #[async_trait]
 impl SlashCommandControllerTrait for BabyfootMatchController {
-    async fn run(command: &ApplicationCommandInteraction, ctx: &Context, app: &ApplicationContext) -> Result<()> {
+    async fn run(
+        command: &ApplicationCommandInteraction,
+        ctx: &Context,
+        app: &ApplicationContext,
+    ) -> Result<()> {
         debug!("Entering babyfoot match controller...");
 
         let options = &command.data.options;
 
-        let j1 = discord::resolve_user_arg(options
-            .get(0)
-            .unwrap())?;
-        
-        let j2 = discord::resolve_user_arg(options
-            .get(1)
-            .unwrap())?;
+        let j1 = discord::resolve_user_arg(options.get(0).unwrap())?;
 
-        let score_j1 =  discord::resolve_int_arg(options
-            .get(2)
-            .unwrap())?;
-    
-        let score_j2 =  discord::resolve_int_arg(options
-            .get(3)
-            .unwrap())?;
+        let j2 = discord::resolve_user_arg(options.get(1).unwrap())?;
 
-        let middleware = BabyfootMiddleware::new(&app);
+        let score_j1 = discord::resolve_int_arg(options.get(2).unwrap())?;
+
+        let score_j2 = discord::resolve_int_arg(options.get(3).unwrap())?;
+
+        let middleware = BabyfootMiddleware::new(app);
 
         debug!("Executing BabyfootMiddleware::register_match middleware...");
-        let content = middleware.register_match(j1, j2, i32::try_from(score_j1)?, i32::try_from(score_j2)?).await?;
-        
+        let content = middleware
+            .register_match(j1, j2, i32::try_from(score_j1)?, i32::try_from(score_j2)?)
+            .await?;
+
         debug!("Responding to ping...");
         Ok(discord::respond_with_message(command, ctx, content).await?)
     }

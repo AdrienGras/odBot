@@ -1346,7 +1346,10 @@ dependencies = [
  "dotenv",
  "env_logger",
  "log",
+ "pad",
+ "rand",
  "serde",
+ "serde_json",
  "serenity",
  "serenity_ctrlc",
  "surrealdb",
@@ -1366,6 +1369,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7940cf2ca942593318d07fcf2596cdca60a85c9e7fab408a5e21a4f9dcd40d87"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "pad"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2ad9b889f1b12e0b9ee24db044b5129150d5eada288edc800f789928dc8c0e3"
+dependencies = [
+ "unicode-width",
 ]
 
 [[package]]

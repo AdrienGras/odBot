@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use clap::{builder::ValueParser, Parser, Subcommand};
 use log::debug;
 use serenity::Client;
 
-use crate::{libraries::discord, core::commands};
+use crate::{core::commands, libraries::discord};
 
 use super::application_context::ApplicationContext;
 
@@ -65,7 +65,7 @@ pub async fn launch_command(
     }
 
     debug!("Command found, entering command...");
-    Ok(command_instance.unwrap().run(discord, app, args).await?)
+    command_instance.unwrap().run(discord, app, args).await
 }
 
 /// This function will parse the arg string into a map formatted as KEY => Option(VALUE).

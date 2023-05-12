@@ -1,14 +1,15 @@
-mod core;
-mod libraries;
-mod utils;
-mod handlers;
+mod commands;
 mod controllers;
+mod core;
+mod data;
+mod handlers;
+mod libraries;
 mod middlewares;
 mod models;
-mod commands;
+mod utils;
 
-use crate::core::launcher::{self, Cli, Command};
 use crate::core::application_context::ApplicationContext;
+use crate::core::launcher::{self, Cli, Command};
 use anyhow::Result;
 use clap::Parser;
 use handlers::bot::Bot;
@@ -52,7 +53,7 @@ async fn main() -> Result<()> {
                 error!("Discord bot daemon crashed: {:?}", error);
             }
             debug!("Shutting down discord bot daemon...");
-        },
+        }
         // executing given command
         Command::Console { sub_command, args } => {
             debug!("Initializing discord client...");
