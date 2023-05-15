@@ -12,7 +12,7 @@ use crate::{
     core::application_context::ApplicationContext,
     models::{
         babyfoot_match::{self, BabyfootMatch},
-        babyfoot_match_quote,
+        babyfoot_match_quote, babyfoot_stat,
         person::{self, Person},
     },
 };
@@ -47,18 +47,6 @@ impl<'a> BabyfootMiddleware<'a> {
 
         for m in possible_matches.iter() {
             let m = m.as_ref().unwrap();
-
-            let m_line = MessageBuilder::new()
-                .mention(&UserId(m.player_1.player.discord_id.parse::<u64>()?))
-                .push(" ")
-                .push(m.player_1.score)
-                .push("   -   ")
-                .push(m.player_2.score)
-                .push(" ")
-                .mention(&UserId(m.player_2.player.discord_id.parse::<u64>()?))
-                .build();
-
-            mb = mb.push_line(m_line);
         }
 
         let message = mb.build();
@@ -66,7 +54,7 @@ impl<'a> BabyfootMiddleware<'a> {
         Ok(message)
     }
 
-    pub async fn register_match(
+    pub async fn register_match_1v1(
         &self,
         j1: &User,
         j2: &User,
@@ -81,16 +69,21 @@ impl<'a> BabyfootMiddleware<'a> {
         debug!("Checking J2 in database...");
         let p2: Person = person::get_or_create_person_from_discord_user(db, j2).await?;
 
-        let _created = babyfoot_match::create_match_from_players_and_scores(
+        debug!("Registering match...");
+        let created = babyfoot_match::create_match_from_players_and_scores(
             db,
-            vec![(p1, score_j1), (p2, score_j2)],
+            vec![(vec![p1.clone()], score_j1), (vec![p2.clone()], score_j2)],
         )
         .await?;
+
+        debug!("Creating stats for J1...");
+        babyfoot_stat::create(db, &p1, score_j1).await?;
+        debug!("Creating stats for J2...");
+        babyfoot_stat::create(db, &p2, score_j2).await?;
 
         debug!("Creating register_match response...");
         let message = MessageBuilder::new()
             .quote_rest()
-            .push_line("  ")
             .push_line(
                 MessageBuilder::new()
                     .push("⚽ 🥳")
@@ -101,22 +94,35 @@ impl<'a> BabyfootMiddleware<'a> {
                     .build(),
             )
             .push_line("")
-            .push_line(
-                MessageBuilder::new()
-                    .mention(j1)
-                    .push(" ")
-                    .push(score_j1)
-                    .push(" — ")
-                    .push(score_j2)
-                    .push(" ")
-                    .mention(j2)
-                    .build(),
-            )
-            .push_line("")
-            .push_line("Allez maintenant on retourne travailler")
-            .push_line("_ _")
+            .push_line(self.render_match(&created)?)
             .build();
 
         Ok(message)
+    }
+
+    pub fn render_match(&self, m: &BabyfootMatch) -> Result<String> {
+        let mb = &mut MessageBuilder::new();
+
+        for (i, p) in m.team_1.players.iter().enumerate() {
+            if i > 0 {
+                mb.push(", ");
+            }
+            mb.mention(&UserId(p.discord_id.parse()?));
+        }
+
+        mb.push("\t");
+        mb.push_bold(m.score_team_1);
+        mb.push("\t-\t");
+        mb.push_bold(m.score_team_2);
+        mb.push("\t");
+
+        for (i, p) in m.team_2.players.iter().enumerate() {
+            if i > 0 {
+                mb.push(", ");
+            }
+            mb.mention(&UserId(p.discord_id.parse()?));
+        }
+
+        Ok(mb.build())
     }
 }

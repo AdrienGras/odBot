@@ -34,8 +34,6 @@ pub async fn get_or_create_person_from_discord_user(
         .bind(("d_id", person_id))
         .await?;
 
-    debug!("{:#?}", response);
-
     let person_opt: Option<Person> = response.take(0)?;
 
     if person_opt.is_none() {

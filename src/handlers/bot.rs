@@ -3,9 +3,21 @@ use std::env;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use log::{debug, error};
-use serenity::{prelude::{EventHandler, Context}, model::prelude::{Ready, GuildId, interaction::Interaction}};
+use serenity::{
+    model::prelude::{interaction::Interaction, GuildId, Ready},
+    prelude::{Context, EventHandler},
+};
 
-use crate::{core::{application_context::ApplicationContext, controllers::{SlashCommandControllerTrait}, constants}, controllers::{ ping::PingController, babyfoot_match::BabyfootMatchController, babyfoot_last_ten::BabyfootLastTenController}};
+use crate::{
+    controllers::{
+        babyfoot_last_ten::BabyfootLastTenController,
+        babyfoot_match_1v1::BabyfootMatch1v1Controller, ping::PingController,
+    },
+    core::{
+        application_context::ApplicationContext, constants,
+        controllers::SlashCommandControllerTrait,
+    },
+};
 
 pub struct Bot {
     application_context: ApplicationContext,
@@ -13,19 +25,22 @@ pub struct Bot {
 
 impl Bot {
     pub fn new(application_context: ApplicationContext) -> Self {
-        Self { application_context }
+        Self {
+            application_context,
+        }
     }
 }
 
 #[async_trait]
 impl EventHandler for Bot {
-
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             debug!(
                 "Received command interaction: {:?} ({:?}) by {:?}",
                 command.data.name,
-                command.data.options
+                command
+                    .data
+                    .options
                     .iter()
                     .map(|opt| format!("{}: {:?}", opt.name, opt.value))
                     .collect::<Vec<String>>()
@@ -35,8 +50,12 @@ impl EventHandler for Bot {
 
             let result = match command.data.name.as_str() {
                 "ping" => PingController::run(&command, &ctx, &self.application_context).await,
-                "babyfoot_match"=> BabyfootMatchController::run(&command, &ctx, &self.application_context).await,
-                "babyfoot_last_ten"=> BabyfootLastTenController::run(&command, &ctx, &self.application_context).await,
+                "babyfoot_1v1" => {
+                    BabyfootMatch1v1Controller::run(&command, &ctx, &self.application_context).await
+                }
+                "babyfoot_last_ten" => {
+                    BabyfootLastTenController::run(&command, &ctx, &self.application_context).await
+                }
                 _ => Err(anyhow!("Not implemented !")),
             };
 
@@ -44,11 +63,13 @@ impl EventHandler for Bot {
                 error!(
                     "Received invalid command interaction: {:?} ({:?}) by {:?} -> {:?}",
                     command.data.name,
-                    command.data.options
-                    .iter()
-                    .map(|opt| format!("{}: {:?}", opt.name, opt.value))
-                    .collect::<Vec<String>>()
-                    .join(", "),                    
+                    command
+                        .data
+                        .options
+                        .iter()
+                        .map(|opt| format!("{}: {:?}", opt.name, opt.value))
+                        .collect::<Vec<String>>()
+                        .join(", "),
                     command.user.tag(),
                     error
                 );
@@ -74,17 +95,20 @@ impl EventHandler for Bot {
             return;
         }
 
-        let guild_id = GuildId(
-            parsed_guild_id.unwrap()
-        );
+        let guild_id = GuildId(parsed_guild_id.unwrap());
 
-        let registration_result = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands
-                .create_application_command(|command| PingController::register(command))
-                .create_application_command(|command| BabyfootMatchController::register(command))
-                .create_application_command(|command| BabyfootLastTenController::register(command))
-        })
-        .await;
+        let registration_result =
+            GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+                commands
+                    .create_application_command(|command| PingController::register(command))
+                    .create_application_command(|command| {
+                        BabyfootMatch1v1Controller::register(command)
+                    })
+                    .create_application_command(|command| {
+                        BabyfootLastTenController::register(command)
+                    })
+            })
+            .await;
 
         if let Err(error) = &registration_result {
             error!("Error while registering commands: {:#?}", error);

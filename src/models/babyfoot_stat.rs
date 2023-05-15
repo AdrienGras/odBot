@@ -20,7 +20,7 @@ pub struct BabyfootStat {
     pub date: DateTime<Utc>,
 }
 
-pub async fn create(db: Surreal<Client>, person: &Person, score: i32) -> Result<BabyfootStat> {
+pub async fn create(db: &Surreal<Client>, person: &Person, score: i32) -> Result<BabyfootStat> {
     let created: BabyfootStat = db
         .create("babyfoot_stat")
         .content(BabyfootStatInput {

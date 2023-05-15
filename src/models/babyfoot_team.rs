@@ -10,6 +10,5 @@ pub struct BabyfootTeamInput {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BabyfootTeam {
-    pub id: Thing,
     pub players: Vec<Person>,
 }
