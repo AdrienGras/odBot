@@ -1,0 +1,47 @@
+{
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'od_bot'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=od_bot",
+                    "--package=od_bot"
+                ],
+                "filter": {
+                    "name": "od_bot",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "launch"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'od_bot'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=od_bot",
+                    "--package=od_bot"
+                ],
+                "filter": {
+                    "name": "od_bot",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

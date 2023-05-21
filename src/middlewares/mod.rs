@@ -1,2 +1,2 @@
-pub mod discord;
-pub mod event_handler;
+pub mod ping_middleware;
+pub mod babyfoot_middleware;

@@ -1,2 +1,2 @@
-pub mod command_trait;
-pub mod ping;
+pub mod database_reset;
+pub mod import_babyfoot_quotes;
