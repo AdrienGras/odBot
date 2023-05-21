@@ -1,8 +1,15 @@
 [package]
 name = "od_bot"
-version = "0.1.0"
+version = "1.0.0-rc.1"
 edition = "2021"
-
+authors = ["Adrien Gras <agr@owlnext.fr>"]
+description = "A simple discord bot for my company"
+documentation = "https://github.com/AdrienGras/odBot"
+readme = "README.md"
+repository = "https://github.com/AdrienGras/odBot"
+license-file = "LICENSE"
+keywords = ["discord"]
+publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
