@@ -10,13 +10,12 @@ use serenity::{
 
 use crate::{
     controllers::{
-        babyfoot_last_ten::BabyfootLastTenController,
-        babyfoot_match_1v1::BabyfootMatch1v1Controller, ping::PingController,
+        babyfoot_match_1v1::BabyfootMatch1v1Controller, ping::PingController, babyfoot_match_2v2::BabyfootMatch2v2Controller, babyfoot_match_1v2::BabyfootMatch1v2Controller, babyfoot_player_stats::BabyfootPlayerStatsController, babyfoot_leaderboards::BabyfootLeaderboardsController,
     },
     core::{
         application_context::ApplicationContext, constants,
         controllers::SlashCommandControllerTrait,
-    },
+    }, libraries::discord, renderers::command_renderer,
 };
 
 pub struct Bot {
@@ -52,14 +51,27 @@ impl EventHandler for Bot {
                 "ping" => PingController::run(&command, &ctx, &self.application_context).await,
                 "babyfoot_1v1" => {
                     BabyfootMatch1v1Controller::run(&command, &ctx, &self.application_context).await
-                }
-                "babyfoot_last_ten" => {
-                    BabyfootLastTenController::run(&command, &ctx, &self.application_context).await
-                }
+                },
+                "babyfoot_2v2" => {
+                    BabyfootMatch2v2Controller::run(&command, &ctx, &self.application_context).await
+                },
+                "babyfoot_1v2" => {
+                    BabyfootMatch1v2Controller::run(&command, &ctx, &self.application_context).await
+                },
+                "babyfoot_player_stats" => {
+                    BabyfootPlayerStatsController::run(&command, &ctx, &self.application_context).await
+                },
+                "babyfoot_leaderboards" => {
+                    BabyfootLeaderboardsController::run(&command, &ctx, &self.application_context).await
+                },
                 _ => Err(anyhow!("Not implemented !")),
             };
 
             if let Err(error) = result {
+                if let Ok(message) = command_renderer::error() {
+                    discord::respond_with_message(&command, &ctx, message).await.unwrap_or(());
+                }
+
                 error!(
                     "Received invalid command interaction: {:?} ({:?}) by {:?} -> {:?}",
                     command.data.name,
@@ -105,14 +117,22 @@ impl EventHandler for Bot {
                         BabyfootMatch1v1Controller::register(command)
                     })
                     .create_application_command(|command| {
-                        BabyfootLastTenController::register(command)
+                        BabyfootMatch2v2Controller::register(command)
+                    })
+                    .create_application_command(|command| {
+                        BabyfootMatch1v2Controller::register(command)
+                    })
+                    .create_application_command(|command| {
+                        BabyfootPlayerStatsController::register(command)
+                    })
+                    .create_application_command(|command| {
+                        BabyfootLeaderboardsController::register(command)
                     })
             })
             .await;
 
         if let Err(error) = &registration_result {
             error!("Error while registering commands: {:#?}", error);
-            return;
         }
 
         debug!(

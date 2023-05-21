@@ -4,12 +4,12 @@ use anyhow::{bail, Result};
 use log::debug;
 use serenity::{
     model::{
-        prelude::interaction::{
+        prelude::{interaction::{
             application_command::{
                 ApplicationCommandInteraction, CommandDataOption, CommandDataOptionValue,
             },
             InteractionResponseType,
-        },
+        }, ChannelId},
         user::User,
     },
     prelude::{Context, GatewayIntents},
@@ -66,6 +66,19 @@ pub async fn respond_with_message(
                 .interaction_response_data(|message| message.content(content))
         })
         .await
+}
+
+pub async fn post_message_on_channel(
+    _command: &ApplicationCommandInteraction,
+    ctx: &Context,
+    channel: ChannelId,
+    content: String,
+) -> Result<(), serenity::Error> {
+    channel.send_message(&ctx.http, |m| {
+        m.content(content)
+    }).await?;
+
+    Ok(())
 }
 
 pub fn resolve_user_arg(arg: &CommandDataOption) -> Result<&User> {

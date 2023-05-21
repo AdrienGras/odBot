@@ -21,9 +21,13 @@ pub async fn load(db: &Surreal<Client>) -> Result<()> {
     debug!("Collecting data...");
     let data = static_data::babyfoot_quotes();
 
-    debug!("Removing old data...");
 
-    let _: Vec<BabyfootMatchQuote> = db.delete("babyfoot_quote").await?;
+    let existing = all(db).await?;
+
+    if !existing.is_empty() {
+        debug!("Removing old data...");
+        let _: Vec<BabyfootMatchQuote> = db.delete("babyfoot_quote").await?;
+    }
 
     for quote in data.iter() {
         let input = BabyfootMatchQuoteInput {
@@ -48,3 +52,9 @@ pub async fn random(db: &Surreal<Client>) -> Result<String> {
 
     Ok(selected.quote.clone())
 }
+
+pub async fn all(db: &Surreal<Client>) -> Result<Vec<BabyfootMatchQuote>> {
+    let result: Vec<BabyfootMatchQuote> = db.select("babyfoot_quote").await?;
+    Ok(result)
+}
+

@@ -7,6 +7,7 @@ mod libraries;
 mod middlewares;
 mod models;
 mod utils;
+mod renderers;
 
 use crate::core::application_context::ApplicationContext;
 use crate::core::launcher::{self, Cli, Command};
